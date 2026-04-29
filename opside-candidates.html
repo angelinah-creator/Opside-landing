@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPSIDE — Get notified at launch</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --surface: #101010;
+    --surface2: #161616;
+    --border: rgba(255,255,255,0.07);
+    --border-mid: rgba(255,255,255,0.12);
+    --white: #ffffff;
+    --white-70: rgba(255,255,255,0.7);
+    --white-40: rgba(255,255,255,0.4);
+    --white-20: rgba(255,255,255,0.2);
+    --white-10: rgba(255,255,255,0.1);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 100;
+  }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: 0.5px solid var(--border);
+    backdrop-filter: blur(12px);
+    background: rgba(8,8,8,0.85);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo-mark {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-logo-mark span { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: white; line-height: 1; }
+  .nav-wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: white; }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .lang-toggle { display: flex; border: 0.5px solid var(--border-mid); }
+  .lang-btn {
+    padding: 7px 16px;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--white-40); background: transparent; border: none; cursor: pointer; transition: all 0.2s;
+    border-right: 0.5px solid var(--border-mid);
+  }
+  .lang-btn:last-child { border-right: none; }
+  .lang-btn.active { background: var(--white); color: var(--black); }
+  .nav-cta {
+    display: inline-flex; align-items: center; padding: 9px 20px;
+    background: var(--white); color: var(--black);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
+    text-decoration: none; cursor: pointer; border: none; transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 140px 48px 80px; position: relative; text-align: center;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border: 0.5px solid var(--border-mid);
+    font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 2px;
+    color: var(--white-40); text-transform: uppercase; margin-bottom: 40px;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 10vw, 130px); line-height: 0.88; letter-spacing: 2px;
+    color: var(--white); margin-bottom: 28px; animation: fadeUp 0.8s 0.1s ease both;
+  }
+  .line-accent { color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,0.35); }
+  .hero-sub {
+    font-size: 17px; font-weight: 300; color: var(--white-40);
+    max-width: 500px; line-height: 1.7; margin-bottom: 56px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+  .hero-sub strong { color: var(--white-70); font-weight: 400; }
+  .waitlist-form { width: 100%; max-width: 540px; animation: fadeUp 0.8s 0.3s ease both; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--white-40); }
+  .form-input, .form-select {
+    background: var(--surface2); border: 0.5px solid var(--border-mid);
+    color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
+    padding: 13px 16px; outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none; border-radius: 0; width: 100%;
+  }
+  .form-input::placeholder { color: var(--white-20); }
+  .form-input:focus, .form-select:focus { border-color: rgba(255,255,255,0.3); }
+  .form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
+  }
+  .form-select option { background: #161616; color: white; }
+  .submit-btn {
+    width: 100%; padding: 17px; background: var(--white); color: var(--black);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; border: none; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s; margin-top: 12px;
+  }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .form-note { font-family: 'DM Mono', monospace; font-size: 9.5px; letter-spacing: 1px; color: rgba(255,255,255,0.2); text-align: center; margin-top: 14px; }
+  .success-state { display: none; text-align: center; padding: 48px 32px; border: 0.5px solid var(--border-mid); background: var(--surface2); }
+  .success-check {
+    width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(74,222,128,0.4);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; color: #4ade80; font-size: 20px;
+  }
+  .success-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--white-40); margin-bottom: 12px; }
+  .success-msg { font-size: 15px; color: var(--white-40); line-height: 1.7; max-width: 340px; margin: 0 auto; }
+  .share-divider { margin: 28px 0; border: none; border-top: 0.5px solid rgba(255,255,255,0.07); }
+  .share-label { font-family: 'DM Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 14px; }
+  .share-row { display: flex; justify-content: center; gap: 10px; }
+  .share-btn {
+    padding: 9px 16px; background: transparent; border: 0.5px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.45); font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+  }
+  .share-btn:hover { color: white; border-color: rgba(255,255,255,0.4); }
+  .counter-strip {
+    display: flex; align-items: center; border: 0.5px solid var(--border);
+    margin-top: 56px; width: 100%; max-width: 540px;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+  .counter-item { padding: 18px 0; text-align: center; border-right: 0.5px solid var(--border); flex: 1; }
+  .counter-item:last-child { border-right: none; }
+  .counter-num { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--white); line-height: 1; }
+  .counter-label { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--white-40); margin-top: 4px; }
+  .section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+  .section-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--white-40); margin-bottom: 48px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .section-eyebrow::before { content: ''; display: block; width: 24px; height: 0.5px; background: var(--white-40); }
+  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 0.5px solid var(--border); }
+  .why-card { padding: 40px 36px; border-right: 0.5px solid var(--border); transition: background 0.3s; }
+  .why-card:last-child { border-right: none; }
+  .why-card:hover { background: var(--surface2); }
+  .why-num { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--white-20); margin-bottom: 20px; }
+  .why-title { font-size: 17px; font-weight: 400; color: var(--white); margin-bottom: 12px; line-height: 1.3; }
+  .why-desc { font-size: 14px; color: var(--white-40); line-height: 1.7; }
+  .geo-section { padding: 0 48px 60px; max-width: 1100px; margin: 0 auto; }
+  .geo-row { display: flex; border: 0.5px solid var(--border); overflow: hidden; }
+  .geo-label {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--white-40); padding: 24px 18px; border-right: 0.5px solid var(--border); white-space: nowrap; flex-shrink: 0;
+  }
+  .countries-list { flex: 1; display: flex; flex-wrap: wrap; }
+  .country-item {
+    padding: 18px 22px; border-right: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border);
+    font-size: 13px; color: var(--white-70); font-weight: 300;
+    transition: background 0.2s, color 0.2s; display: flex; align-items: center; gap: 10px;
+  }
+  .country-item:hover { background: var(--surface2); color: var(--white); }
+  .dest-row { display: flex; border: 0.5px solid var(--border); border-top: none; }
+  .dest-tag {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 14px 18px; border-right: 0.5px solid var(--border); color: var(--white-20); white-space: nowrap;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .dest-items { flex: 1; display: flex; flex-wrap: wrap; }
+  .dest-item {
+    padding: 14px 20px; border-right: 0.5px solid var(--border);
+    font-size: 13px; color: var(--white-40); display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+  }
+  .dest-item:last-child { border-right: none; }
+  .dest-item:hover { color: var(--white-70); }
+  .process-section { padding: 0 48px 100px; max-width: 1100px; margin: 0 auto; }
+  .process-steps { display: grid; grid-template-columns: repeat(4, 1fr); border: 0.5px solid var(--border); }
+  .process-step { padding: 36px 28px; border-right: 0.5px solid var(--border); position: relative; }
+  .process-step:last-child { border-right: none; }
+  .step-num { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; color: var(--white-10); margin-bottom: 16px; }
+  .step-title { font-size: 15px; font-weight: 400; color: var(--white); margin-bottom: 10px; line-height: 1.3; }
+  .step-desc { font-size: 13px; color: var(--white-40); line-height: 1.65; }
+  .step-arrow {
+    position: absolute; top: 36px; right: -5px; width: 8px; height: 8px;
+    border-right: 0.5px solid rgba(255,255,255,0.25); border-top: 0.5px solid rgba(255,255,255,0.25);
+    transform: rotate(45deg); background: var(--black); z-index: 1;
+  }
+  .process-step:last-child .step-arrow { display: none; }
+  .cta-bottom {
+    padding: 100px 48px; max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-top: 0.5px solid var(--border);
+  }
+  .cta-big-text { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 7vw, 90px); line-height: 0.9; color: var(--white); }
+  .cta-big-text .outline { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.25); display: block; }
+  .cta-right { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
+  .cta-right-desc { font-size: 14px; color: var(--white-40); text-align: right; max-width: 260px; line-height: 1.65; }
+  .cta-btn {
+    display: inline-flex; align-items: center; padding: 16px 32px;
+    background: var(--white); color: var(--black);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    letter-spacing: 1px; text-transform: uppercase; border: none; cursor: pointer; transition: opacity 0.2s;
+  }
+  .cta-btn:hover { opacity: 0.85; }
+  footer {
+    border-top: 0.5px solid var(--border); padding: 32px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--white-40); }
+  .footer-links { display: flex; gap: 28px; }
+  .footer-link { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--white-20); text-decoration: none; transition: color 0.2s; }
+  .footer-link:hover { color: var(--white-40); }
+  .footer-copy { font-family: 'DM Mono', monospace; font-size: 9.5px; color: var(--white-20); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+  @media(max-width:768px){
+    nav{padding:16px 20px} .nav-cta{display:none}
+    .hero{padding:120px 24px 60px} .form-grid{grid-template-columns:1fr}
+    .why-grid{grid-template-columns:1fr} .why-card{border-right:none;border-bottom:0.5px solid var(--border)}
+    .process-steps{grid-template-columns:1fr 1fr}
+    .cta-bottom{flex-direction:column;gap:40px} .cta-right{align-items:flex-start}
+    .section,.geo-section,.process-section{padding-left:24px;padding-right:24px}
+    .counter-strip{max-width:100%}
+    footer{flex-direction:column;gap:20px;text-align:center}
+    .footer-links{flex-wrap:wrap;justify-content:center}
+    .geo-row{flex-direction:column} .geo-label{writing-mode:horizontal-tb;transform:none;padding:10px 18px;border-right:none;border-bottom:0.5px solid var(--border)}
+    .dest-row{flex-direction:column} .dest-items{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark"><span>O</span></div>
+    <span class="nav-wordmark">OPSIDE</span>
+  </a>
+  <div class="nav-right">
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
+      <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+    </div>
+    <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">
+      <span id="nav-cta-text">S'inscrire →</span>
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    <span id="badge-text">Lancement juin 2026 · Sois le premier informé</span>
+  </div>
+
+  <h1 class="hero-title" id="hero-title">
+    TON CODE.<br>
+    <span class="line-accent">LE MONDE</span><br>
+    ENTIER.
+  </h1>
+
+  <p class="hero-sub" id="hero-sub">
+    OPSIDE arrive. La plateforme qui connecte les développeurs africains aux <strong>meilleures entreprises en Europe et aux États-Unis</strong> — contrats clairs, suivi de mission, paiement en monnaie locale. Inscris-toi pour être notifié dès le lancement.
+  </p>
+
+  <div class="waitlist-form" id="waitlist">
+    <div id="form-container">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" id="lbl-fname">Prénom</label>
+          <input class="form-input" type="text" id="fname" placeholder="Alex" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="lbl-lname">Nom</label>
+          <input class="form-input" type="text" id="lname" placeholder="Mensah" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="email" placeholder="alex@email.com" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label" id="lbl-country">Pays de résidence</label>
+          <select class="form-select" id="country">
+            <option value="" id="opt-select">Sélectionner…</option>
+            <optgroup label="Africa">
+              <option>Nigeria</option>
+              <option>Kenya</option>
+              <option>Ghana</option>
+              <option>Senegal</option>
+              <option>Côte d'Ivoire</option>
+              <option>Cameroon</option>
+              <option>Morocco</option>
+              <option>Tunisia</option>
+              <option>Egypt</option>
+              <option>Rwanda</option>
+              <option>DRC</option>
+              <option>Madagascar</option>
+              <option>Mali</option>
+              <option>Benin</option>
+              <option>Togo</option>
+              <option id="opt-other-af">Autre Afrique</option>
+            </optgroup>
+            <optgroup label="Diaspora">
+              <option>France</option>
+              <option>Canada</option>
+              <option>Belgium</option>
+              <option>Switzerland</option>
+              <option>United Kingdom</option>
+              <option>United States</option>
+              <option id="opt-other">Autre</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="submitForm()">ME NOTIFIER AU LANCEMENT →</button>
+      <p class="form-note" id="form-note">Pas de spam · Un seul email au lancement · Désinscription en 1 clic</p>
+    </div>
+
+    <div class="success-state" id="success-state">
+      <div class="success-check">✓</div>
+      <div class="success-label" id="success-label">Tu es inscrit</div>
+      <p class="success-msg" id="success-msg">On t'envoie un email dès qu'OPSIDE est live. Un seul email. Promis.</p>
+      <hr class="share-divider">
+      <p class="share-label" id="share-label">Partage à un dev que tu connais</p>
+      <div class="share-row">
+        <button class="share-btn" onclick="shareWL('linkedin')">LinkedIn</button>
+        <button class="share-btn" onclick="shareWL('twitter')">Twitter / X</button>
+        <button class="share-btn" onclick="shareWL('whatsapp')">WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-strip">
+    <div class="counter-item">
+      <div class="counter-num">5 000+</div>
+      <div class="counter-label" id="cnt1">Devs dans le réseau</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num" id="cnt-launch">Juin 2026</div>
+      <div class="counter-label" id="cnt2">Date de lancement</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num">&lt;72h</div>
+      <div class="counter-label" id="cnt3">Matching garanti</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num">US + EU</div>
+      <div class="counter-label" id="cnt4">Marchés clients</div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal">
+  <div class="section-eyebrow" id="why-eyebrow">Pourquoi OPSIDE</div>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-num">01</div>
+      <div class="why-title" id="why1-title">Des missions qui valent le coup</div>
+      <p class="why-desc" id="why1-desc">Entreprises en France, Belgique, Suisse, Canada et aux US. Des projets sérieux avec des équipes qui respectent les devs africains.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-num">02</div>
+      <div class="why-title" id="why2-title">Payé en monnaie locale, à temps</div>
+      <p class="why-desc" id="why2-desc">Plus de galères de virement international. OPSIDE avance les paiements directement dans ta monnaie locale, chaque mois.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-num">03</div>
+      <div class="why-title" id="why3-title">Zéro démarches administratives</div>
+      <p class="why-desc" id="why3-desc">Contrats, feuilles de temps, conformité légale. On gère tout à ta place. Toi tu codes.</p>
+    </div>
+  </div>
+</section>
+
+<div class="geo-section reveal">
+  <div class="geo-row">
+    <div class="geo-label" id="geo-label">Devs acceptés</div>
+    <div class="countries-list">
+      <div class="country-item">🇳🇬 Nigeria</div>
+      <div class="country-item">🇰🇪 Kenya</div>
+      <div class="country-item">🇬🇭 Ghana</div>
+      <div class="country-item">🇸🇳 Sénégal</div>
+      <div class="country-item">🇨🇮 Côte d'Ivoire</div>
+      <div class="country-item">🇨🇲 Cameroun</div>
+      <div class="country-item">🇲🇦 Maroc</div>
+      <div class="country-item">🇹🇳 Tunisie</div>
+      <div class="country-item">🇷🇼 Rwanda</div>
+      <div class="country-item">🇲🇬 Madagascar</div>
+      <div class="country-item">🇧🇯 Bénin</div>
+      <div class="country-item">🇨🇩 RDC</div>
+      <div class="country-item" id="geo-more">🌍 Et plus…</div>
+    </div>
+  </div>
+  <div class="dest-row">
+    <div class="dest-tag" id="dest-tag">Marchés clients</div>
+    <div class="dest-items">
+      <div class="dest-item">🇺🇸 USA</div>
+      <div class="dest-item">🇫🇷 France</div>
+      <div class="dest-item">🇨🇦 Canada</div>
+      <div class="dest-item">🇧🇪 Belgium</div>
+      <div class="dest-item">🇨🇭 Switzerland</div>
+      <div class="dest-item">🇬🇧 UK</div>
+      <div class="dest-item">🇦🇪 UAE</div>
+    </div>
+  </div>
+</div>
+
+<div class="process-section reveal">
+  <div class="section-eyebrow" id="how-eyebrow">Comment ça marche</div>
+  <div class="process-steps">
+    <div class="process-step">
+      <div class="step-num">01</div>
+      <div class="step-title" id="s1t">Tu t'inscris ici</div>
+      <p class="step-desc" id="s1d">On analyse ton profil et ta stack dès le lancement de la plateforme.</p>
+      <div class="step-arrow"></div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">02</div>
+      <div class="step-title" id="s2t">Test technique</div>
+      <p class="step-desc" id="s2d">Un test adapté à tes compétences, dynamique et rapide. Pas un QCM générique.</p>
+      <div class="step-arrow"></div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">03</div>
+      <div class="step-title" id="s3t">Matching & entretien</div>
+      <p class="step-desc" id="s3d">On te présente à des clients qui correspondent vraiment à ton profil et à tes attentes.</p>
+      <div class="step-arrow"></div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">04</div>
+      <div class="step-title" id="s4t">Tu codes. On gère.</div>
+      <p class="step-desc" id="s4d">Contrat signé, paie mensuelle en local, suivi de mission. Tu te concentres sur ton travail.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cta-bottom reveal">
+  <div class="cta-big-text" id="cta-big">
+    TON<br>PROCHAIN<br><span class="outline">CONTRAT</span>
+  </div>
+  <div class="cta-right">
+    <p class="cta-right-desc" id="cta-desc">OPSIDE lance en juin 2026. Inscris-toi maintenant pour être parmi les premiers notifiés.</p>
+    <button class="cta-btn" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">
+      <span id="cta-btn-text">S'inscrire maintenant →</span>
+    </button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">OPSIDE</div>
+  <div class="footer-links">
+    <a href="https://opsideworks.com" class="footer-link" target="_blank" id="footer-link1">Pour les entreprises</a>
+    <a href="mailto:hello@opsideworks.com" class="footer-link">hello@opsideworks.com</a>
+    <a href="#" class="footer-link" id="footer-link2">Mentions légales</a>
+  </div>
+  <div class="footer-copy">© 2026 OPSIDE.</div>
+</footer>
+
+<script>
+const T = {
+  fr: {
+    navCta: "S'inscrire →",
+    badge: "Lancement juin 2026 · Sois le premier informé",
+    heroTitle: "TON CODE.<br><span class='line-accent'>LE MONDE</span><br>ENTIER.",
+    heroSub: "OPSIDE arrive. La plateforme qui connecte les développeurs africains aux <strong>meilleures entreprises en Europe et aux États-Unis</strong> — contrats clairs, suivi de mission, paiement en monnaie locale. Inscris-toi pour être notifié dès le lancement.",
+    lblFname: "Prénom", lblLname: "Nom", lblCountry: "Pays de résidence",
+    optSelect: "Sélectionner…", optOtherAf: "Autre Afrique", optOther: "Autre",
+    submitBtn: "ME NOTIFIER AU LANCEMENT →",
+    formNote: "Pas de spam · Un seul email au lancement · Désinscription en 1 clic",
+    successLabel: "Tu es inscrit",
+    successMsg: "On t'envoie un email dès qu'OPSIDE est live. Un seul email. Promis.",
+    shareLabel: "Partage à un dev que tu connais",
+    cnt1: "Devs dans le réseau", cntLaunch: "Juin 2026", cnt2: "Date de lancement", cnt3: "Matching garanti", cnt4: "Marchés clients",
+    whyEyebrow: "Pourquoi OPSIDE",
+    why1t: "Des missions qui valent le coup", why1d: "Entreprises en France, Belgique, Suisse, Canada et aux US. Des projets sérieux avec des équipes qui respectent les devs africains.",
+    why2t: "Payé en monnaie locale, à temps", why2d: "Plus de galères de virement international. OPSIDE avance les paiements directement dans ta monnaie locale, chaque mois.",
+    why3t: "Zéro démarches administratives", why3d: "Contrats, feuilles de temps, conformité légale. On gère tout à ta place. Toi tu codes.",
+    geoLabel: "Devs acceptés", geoMore: "🌍 Et plus…", destTag: "Marchés clients",
+    howEyebrow: "Comment ça marche",
+    s1t: "Tu t'inscris ici", s1d: "On analyse ton profil et ta stack dès le lancement de la plateforme.",
+    s2t: "Test technique", s2d: "Un test adapté à tes compétences, dynamique et rapide. Pas un QCM générique.",
+    s3t: "Matching & entretien", s3d: "On te présente à des clients qui correspondent vraiment à ton profil et à tes attentes.",
+    s4t: "Tu codes. On gère.", s4d: "Contrat signé, paie mensuelle en local, suivi de mission. Tu te concentres sur ton travail.",
+    ctaBig: "TON<br>PROCHAIN<br><span class='outline'>CONTRAT</span>",
+    ctaDesc: "OPSIDE lance en juin 2026. Inscris-toi maintenant pour être parmi les premiers notifiés.",
+    ctaBtn: "S'inscrire maintenant →",
+    footerLink1: "Pour les entreprises", footerLink2: "Mentions légales",
+    sendingBtn: "ENVOI…",
+    shareMsg: "OPSIDE arrive — la plateforme qui connecte les devs africains aux entreprises en Europe et aux US. Lancement juin 2026, inscris-toi pour être notifié 👇"
+  },
+  en: {
+    navCta: "Get notified →",
+    badge: "Launching June 2026 · Be the first to know",
+    heroTitle: "YOUR CODE.<br><span class='line-accent'>THE WHOLE</span><br>WORLD.",
+    heroSub: "OPSIDE is coming. The platform connecting African developers with <strong>top companies across Europe and the US</strong> — clear contracts, mission tracking, and local currency payment. Sign up to be notified on launch day.",
+    lblFname: "First name", lblLname: "Last name", lblCountry: "Country of residence",
+    optSelect: "Select…", optOtherAf: "Other Africa", optOther: "Other",
+    submitBtn: "NOTIFY ME AT LAUNCH →",
+    formNote: "No spam · One email on launch day · Unsubscribe anytime",
+    successLabel: "You're in",
+    successMsg: "We'll send you one email the day OPSIDE goes live. Just one. Promise.",
+    shareLabel: "Share with a dev you know",
+    cnt1: "Devs in network", cntLaunch: "June 2026", cnt2: "Launch date", cnt3: "Matching time", cnt4: "Client markets",
+    whyEyebrow: "Why OPSIDE",
+    why1t: "Missions worth your time", why1d: "Companies across France, Belgium, Switzerland, Canada, and the US. Serious projects with teams that respect African talent.",
+    why2t: "Paid in local currency, on time", why2d: "No more international transfer headaches. OPSIDE pays you directly in your local currency, every month, on time.",
+    why3t: "Zero admin, zero paperwork", why3d: "Contracts, timesheets, legal compliance. We handle everything. You just build.",
+    geoLabel: "Accepted devs", geoMore: "🌍 And more…", destTag: "Client markets",
+    howEyebrow: "How it works",
+    s1t: "You sign up here", s1d: "We review your profile and stack as soon as the platform goes live.",
+    s2t: "Technical assessment", s2d: "A skill-matched test — dynamic, fast, and built around your stack. No generic MCQs.",
+    s3t: "Matching & interview", s3d: "We match you with clients that genuinely fit your profile and expectations.",
+    s4t: "You build. We handle the rest.", s4d: "Signed contract, local monthly pay, mission tracking. You focus on the work.",
+    ctaBig: "YOUR<br>NEXT<br><span class='outline'>CONTRACT</span>",
+    ctaDesc: "OPSIDE launches in June 2026. Sign up now and be among the first to know.",
+    ctaBtn: "Sign up now →",
+    footerLink1: "For companies", footerLink2: "Legal",
+    sendingBtn: "SENDING…",
+    shareMsg: "OPSIDE is coming — the platform connecting African devs with companies across Europe and the US. Launching June 2026, sign up to get notified 👇"
+  }
+};
+
+let lang = 'fr';
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-fr').classList.toggle('active', l === 'fr');
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.documentElement.lang = l;
+  const t = T[l];
+  document.getElementById('nav-cta-text').textContent = t.navCta;
+  document.getElementById('badge-text').textContent = t.badge;
+  document.getElementById('hero-title').innerHTML = t.heroTitle;
+  document.getElementById('hero-sub').innerHTML = t.heroSub;
+  document.getElementById('lbl-fname').textContent = t.lblFname;
+  document.getElementById('lbl-lname').textContent = t.lblLname;
+  document.getElementById('lbl-country').textContent = t.lblCountry;
+  document.getElementById('opt-select').textContent = t.optSelect;
+  document.getElementById('opt-other-af').textContent = t.optOtherAf;
+  document.getElementById('opt-other').textContent = t.optOther;
+  const btn = document.getElementById('submit-btn');
+  if (!btn.disabled) btn.textContent = t.submitBtn;
+  document.getElementById('form-note').textContent = t.formNote;
+  document.getElementById('success-label').textContent = t.successLabel;
+  document.getElementById('success-msg').textContent = t.successMsg;
+  document.getElementById('share-label').textContent = t.shareLabel;
+  document.getElementById('cnt1').textContent = t.cnt1;
+  document.getElementById('cnt-launch').textContent = t.cntLaunch;
+  document.getElementById('cnt2').textContent = t.cnt2;
+  document.getElementById('cnt3').textContent = t.cnt3;
+  document.getElementById('cnt4').textContent = t.cnt4;
+  document.getElementById('why-eyebrow').textContent = t.whyEyebrow;
+  document.getElementById('why1-title').textContent = t.why1t;
+  document.getElementById('why1-desc').textContent = t.why1d;
+  document.getElementById('why2-title').textContent = t.why2t;
+  document.getElementById('why2-desc').textContent = t.why2d;
+  document.getElementById('why3-title').textContent = t.why3t;
+  document.getElementById('why3-desc').textContent = t.why3d;
+  document.getElementById('geo-label').textContent = t.geoLabel;
+  document.getElementById('geo-more').textContent = t.geoMore;
+  document.getElementById('dest-tag').textContent = t.destTag;
+  document.getElementById('how-eyebrow').textContent = t.howEyebrow;
+  document.getElementById('s1t').textContent = t.s1t;
+  document.getElementById('s1d').textContent = t.s1d;
+  document.getElementById('s2t').textContent = t.s2t;
+  document.getElementById('s2d').textContent = t.s2d;
+  document.getElementById('s3t').textContent = t.s3t;
+  document.getElementById('s3d').textContent = t.s3d;
+  document.getElementById('s4t').textContent = t.s4t;
+  document.getElementById('s4d').textContent = t.s4d;
+  document.getElementById('cta-big').innerHTML = t.ctaBig;
+  document.getElementById('cta-desc').textContent = t.ctaDesc;
+  document.getElementById('cta-btn-text').textContent = t.ctaBtn;
+  document.getElementById('footer-link1').textContent = t.footerLink1;
+  document.getElementById('footer-link2').textContent = t.footerLink2;
+}
+
+function submitForm() {
+  const fname = document.getElementById('fname').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const country = document.getElementById('country').value;
+  let valid = true;
+  [{el: document.getElementById('fname'), v: fname}, {el: document.getElementById('email'), v: email}, {el: document.getElementById('country'), v: country}].forEach(({el, v}) => {
+    if (!v) { el.style.borderColor = 'rgba(255,100,100,0.5)'; setTimeout(() => el.style.borderColor = '', 2000); valid = false; }
+  });
+  if (!valid) return;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const el = document.getElementById('email');
+    el.style.borderColor = 'rgba(255,100,100,0.5)';
+    setTimeout(() => el.style.borderColor = '', 2000);
+    return;
+  }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = T[lang].sendingBtn;
+  setTimeout(() => {
+    document.getElementById('form-container').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+  }, 1200);
+}
+
+function shareWL(platform) {
+  const text = encodeURIComponent(T[lang].shareMsg);
+  const url = encodeURIComponent('https://opsideworks.com/talents');
+  if (platform === 'linkedin') window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url);
+  else if (platform === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url);
+  else if (platform === 'whatsapp') window.open('https://wa.me/?text=' + text + '%20' + url);
+}
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, {threshold: 0.1});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
